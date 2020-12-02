@@ -1,9 +1,12 @@
+import collections
 import logging
+import time
+
+import pyqtgraph as pg
 import serial
 
 from PySide2.QtCore import QThread, QTimer
-from PySide2.QtGui import QTextCursor
-from PySide2.QtWidgets import QMainWindow
+from PySide2.QtWidgets import QMainWindow, QGridLayout
 
 from .ui_main_window import Ui_MainWindow
 from ..background_thread.serial_thread import SerialThread
@@ -31,6 +34,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portOpenClosePushButton.clicked.connect(self.openClosePort)
 
         self.serialThread.disconnectedAbnomally.connect(self.openClosePort)
+        self.serialThread.receivedData.connect(self.updatePlot)
 
         self.textViewEnableCheckBox.clicked.connect(self.enableTextView)
 
@@ -54,6 +58,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.textViewSendPushButton.clicked.connect(self.sendData)
         self.textViewSendLineEdit.returnPressed.connect(self.sendData)
+
+        graphGridLayout = QGridLayout(self.graphWidget)
+        self.graphWidget.setLayout(graphGridLayout)
+
+        self.plotNum = 2
+        self.plotBufferSize = 300
+
+        self.plotWidget = []
+        self.plot = []
+        self.plotY = []
+        self.plotX = []
+        self.plotLastTime = []
+        for i in range(self.plotNum):
+            self.plotWidget.append(pg.PlotWidget(self.graphWidget))
+            graphGridLayout.addWidget(self.plotWidget[i], i, 0)
+            self.plotWidget[i].setBackground("w")
+            self.plotWidget[i].setMinimumSize(0, 200)  # width, height
+
+            self.plotY.append(collections.deque())
+            self.plotX.append(collections.deque())
+            for j in range(self.plotBufferSize):
+                self.plotY[i].append(0.0)
+                self.plotX[i].append(j + 1)
+
+            self.plot.append(
+                self.plotWidget[i].plot(
+                    self.plotX[i], self.plotY[i], pen=pg.mkPen("r", width=3)
+                )
+            )
+
+            self.plotLastTime.append(time.time())
+
+        self.receivedData = ""
 
     def refreshPortComboBox(self):
         self.portComboBox.clear()
@@ -131,9 +168,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pass
 
     def appendTextView(self, data: bytes):
-        self.textViewPlainTextEdit.insertPlainText(
-            data.decode().replace("\r", "")
-        )
+        try:
+            _temp = data.decode().replace("\r", "")
+        except UnicodeDecodeError:
+            return
+        self.textViewPlainTextEdit.insertPlainText(_temp)
         self.textViewPlainTextEdit.centerCursor()
 
     def sendData(self):
@@ -150,6 +189,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.serialThread.transmit(
             self.textViewSendLineEdit.text().encode() + _ending
         )
+
+    def updatePlot(self, data: bytes):
+        try:
+            _temp = data.decode().replace("\r", "")
+        except UnicodeDecodeError:
+            return
+
+        _receivedData = self.receivedData
+        while True:
+            _index = _temp.find("\n")
+            if _index < 0:
+                _receivedData += _temp
+                break
+
+            _receivedData += _temp[:_index]
+            _receivedData = _receivedData.split(",")
+
+            _currentTime = time.time()
+            for i in range(min(self.plotNum, len(_receivedData))):
+                self.plotX[i].append(
+                    self.plotX[i].popleft() + self.plotBufferSize
+                )
+
+                try:
+                    self.plotY[i].append(float(_receivedData[i]))
+                except ValueError:
+                    continue
+                _len = len(self.plotY[i])
+                while _len > self.plotBufferSize:
+                    self.plotY[i].popleft()
+                    _len -= 1
+
+                # Max FPS == 60 Hz
+                if _currentTime - self.plotLastTime[i] > 1 / 60:
+                    self.plot[i].setData(self.plotX[i], self.plotY[i])
+                    self.plotLastTime[i] = _currentTime
+
+            _temp = _temp[_index + 1 :]
+            _receivedData = ""
+
+        self.receivedData = _receivedData
 
     def closeEvent(self, event):
         try:
