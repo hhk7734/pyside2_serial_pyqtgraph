@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 5.15.1
+## Created by: Qt User Interface Compiler version 5.15.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -26,6 +26,11 @@ class Ui_MainWindow(object):
         self.gridLayout.setObjectName(u"gridLayout")
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
+        self.tabWidget.setSizePolicy(sizePolicy)
         self.portTab = QWidget()
         self.portTab.setObjectName(u"portTab")
         self.verticalLayout_2 = QVBoxLayout(self.portTab)
@@ -165,11 +170,11 @@ class Ui_MainWindow(object):
 
         self.portComboBox = QComboBox(self.portTab)
         self.portComboBox.setObjectName(u"portComboBox")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.portComboBox.sizePolicy().hasHeightForWidth())
-        self.portComboBox.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.portComboBox.sizePolicy().hasHeightForWidth())
+        self.portComboBox.setSizePolicy(sizePolicy1)
         self.portComboBox.setEditable(True)
 
         self.gridLayout_3.addWidget(self.portComboBox, 0, 1, 1, 1)
@@ -181,8 +186,8 @@ class Ui_MainWindow(object):
 
         self.portBaudrateComboBox = QComboBox(self.portTab)
         self.portBaudrateComboBox.setObjectName(u"portBaudrateComboBox")
-        sizePolicy.setHeightForWidth(self.portBaudrateComboBox.sizePolicy().hasHeightForWidth())
-        self.portBaudrateComboBox.setSizePolicy(sizePolicy)
+        sizePolicy1.setHeightForWidth(self.portBaudrateComboBox.sizePolicy().hasHeightForWidth())
+        self.portBaudrateComboBox.setSizePolicy(sizePolicy1)
         self.portBaudrateComboBox.setEditable(False)
 
         self.gridLayout_3.addWidget(self.portBaudrateComboBox, 1, 1, 1, 1)
@@ -276,7 +281,12 @@ class Ui_MainWindow(object):
         self.commandsTab.setObjectName(u"commandsTab")
         self.tabWidget.addTab(self.commandsTab, "")
 
-        self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.tabWidget, 1, 0, 1, 1)
+
+        self.graphWidget = QWidget(self.centralwidget)
+        self.graphWidget.setObjectName(u"graphWidget")
+
+        self.gridLayout.addWidget(self.graphWidget, 0, 0, 1, 1)
 
 
         self.verticalLayout.addLayout(self.gridLayout)
